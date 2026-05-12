@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: sosovault-api
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true
+    envVars:
+      - key: SOSOVALUE_API_KEY
+        sync: false  # set in Render dashboard
+      - key: GROQ_API_KEY
+        sync: false  # set in Render dashboard
+      - key: SODEX_BASE_URL
+        value: https://testnet-gw.sodex.dev
+      - key: CORS_ALLOW_ORIGINS
+        value: "*"
+      - key: PORT
+        value: "10000"
