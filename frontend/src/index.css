@@ -1,0 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 230 25% 7%;
+    --foreground: 220 20% 92%;
+
+    --card: 230 25% 11%;
+    --card-foreground: 220 20% 92%;
+
+    --popover: 230 25% 11%;
+    --popover-foreground: 220 20% 92%;
+
+    --primary: 38 96% 56%;            /* Binance/SoSo orange */
+    --primary-foreground: 230 25% 7%;
+
+    --secondary: 32 100% 62%;          /* Lighter amber */
+    --secondary-foreground: 230 25% 7%;
+
+    --muted: 230 20% 18%;
+    --muted-foreground: 220 15% 55%;
+
+    --accent: 28 100% 52%;             /* Deep orange accent */
+    --accent-foreground: 230 25% 7%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 230 20% 18%;
+    --input: 230 20% 18%;
+    --ring: 38 96% 56%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens */
+    --glow-primary: 38 96% 56%;
+    --glow-accent: 28 100% 52%;
+    --success: 152 60% 48%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 10%;
+    --risk-low: 152 60% 48%;
+    --risk-medium: 38 92% 50%;
+    --risk-high: 0 72% 51%;
+
+    --glass-bg: 230 25% 12%;
+    --glass-border: 230 20% 22%;
+    --glass-shine: 38 96% 56%;
+
+    --sidebar-background: 230 25% 9%;
+    --sidebar-foreground: 220 20% 75%;
+    --sidebar-primary: 38 96% 56%;
+    --sidebar-primary-foreground: 230 25% 7%;
+    --sidebar-accent: 230 20% 15%;
+    --sidebar-accent-foreground: 220 20% 92%;
+    --sidebar-border: 230 20% 15%;
+    --sidebar-ring: 38 96% 56%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  code, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card/60 backdrop-blur-xl border border-glass-border rounded-xl;
+    box-shadow:
+      0 0 0 1px hsl(var(--glass-border) / 0.3),
+      0 8px 32px -8px hsl(var(--glow-primary) / 0.08),
+      inset 0 1px 0 0 hsl(var(--glass-shine) / 0.05);
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300;
+  }
+
+  .glass-card-hover:hover {
+    box-shadow:
+      0 0 0 1px hsl(var(--glass-border) / 0.5),
+      0 12px 40px -8px hsl(var(--glow-primary) / 0.15),
+      inset 0 1px 0 0 hsl(var(--glass-shine) / 0.1);
+    transform: translateY(-2px);
+  }
+
+  .glow-text {
+    text-shadow: 0 0 20px hsl(var(--glow-primary) / 0.5);
+  }
+
+  .glow-dot {
+    box-shadow: 0 0 8px 2px currentColor;
+  }
+
+  .gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .skeleton-glow {
+    @apply animate-pulse rounded-md;
+    background: linear-gradient(90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--muted-foreground) / 0.1) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+
+  .btn-glow {
+    @apply relative overflow-hidden;
+  }
+
+  .btn-glow::after {
+    content: '';
+    @apply absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300;
+    box-shadow: 0 0 20px 4px hsl(var(--glow-primary) / 0.4);
+  }
+
+  .btn-glow:hover::after {
+    @apply opacity-100;
+  }
+}
+
+@layer utilities {
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 8px 2px hsl(var(--glow-primary) / 0.3); }
+    50% { box-shadow: 0 0 16px 4px hsl(var(--glow-primary) / 0.6); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-4px); }
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+}
