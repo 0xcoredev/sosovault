@@ -61,7 +61,11 @@ def _headers() -> dict[str, str]:
 
 
 async def _get(path: str, params: Optional[dict[str, Any]] = None) -> Optional[Any]:
-    """Internal GET with caching + best-effort error handling."""
+    """Internal GET with caching + best-effort error handling.
+
+    SoSoValue wraps every response in `{code, message, data, details}`. We unwrap
+    `data` here so callers always see the inner payload.
+    """
     cache_key = f"{path}::{params or {}}"
     cached = _cache.get(cache_key)
     if cached is not None:
@@ -76,16 +80,28 @@ async def _get(path: str, params: Optional[dict[str, Any]] = None) -> Optional[A
         async with httpx.AsyncClient(timeout=TIMEOUT_S) as client:
             resp = await client.get(url, headers=_headers(), params=params or {})
             resp.raise_for_status()
-            data = resp.json()
-            _cache.set(cache_key, data)
-            return data
+            envelope = resp.json()
     except httpx.HTTPStatusError as exc:
         print(f"[sosovalue] HTTP {exc.response.status_code} on {path}: {exc.response.text[:200]}")
+        return None
     except httpx.HTTPError as exc:
         print(f"[sosovalue] network error on {path}: {exc}")
+        return None
     except Exception as exc:  # pragma: no cover - defensive
         print(f"[sosovalue] unexpected error on {path}: {exc}")
-    return None
+        return None
+
+    # Unwrap {code, message, data}.
+    if isinstance(envelope, dict) and "data" in envelope:
+        if envelope.get("code") not in (0, "0", None):
+            print(f"[sosovalue] non-zero code on {path}: {envelope.get('code')} {envelope.get('message')}")
+            return None
+        data = envelope.get("data")
+    else:
+        data = envelope
+
+    _cache.set(cache_key, data)
+    return data
 
 
 # --------------------------------------------------------------------------- #
@@ -93,11 +109,29 @@ async def _get(path: str, params: Optional[dict[str, Any]] = None) -> Optional[A
 # --------------------------------------------------------------------------- #
 
 async def list_indices() -> list[str]:
-    """Returns ticker strings, e.g. ['ssimag7', 'ssilayer1']. Empty list on failure."""
+    """Returns the live ticker list, e.g. ['ssiMAG7', 'ssiLayer1', ...].
+
+    SoSoValue tickers are camelCase (`ssiMAG7`, `ssiDeFi`, `ssiLayer1`).
+    """
     data = await _get("/indices")
     if isinstance(data, list):
         return [str(t) for t in data if t]
     return []
+
+
+async def find_index_ticker(preferred: str) -> Optional[str]:
+    """Resolve a preferred lower/upper-case ticker name to whatever casing the
+    live API actually returns. e.g. given 'ssimag7' returns 'ssiMAG7'.
+
+    Returns None if no live index matches.
+    """
+    if not preferred:
+        return None
+    target = preferred.lower()
+    for actual in await list_indices():
+        if actual.lower() == target:
+            return actual
+    return None
 
 
 async def index_constituents(ticker: str) -> list[dict[str, Any]]:

@@ -85,11 +85,14 @@ async def build_signals_feed(news_limit: int = 8) -> dict[str, Any]:
             }
         )
 
-    # 2. Index momentum signals (1-month ROI on top 2 available)
+    # 2. Index momentum signals (1-month ROI on top 2 available).
+    # Live tickers are camelCase. Match case-insensitively against /indices.
+    avail_lower = {t.lower(): t for t in indices}
     chosen_indices: list[str] = []
-    for ticker in ("ssimag7", "ssilayer1", "ssidefi", "ssiai"):
-        if ticker in indices:
-            chosen_indices.append(ticker)
+    for pref in ("ssiMAG7", "ssiLayer1", "ssiDeFi", "ssiAI"):
+        actual = avail_lower.get(pref.lower())
+        if actual and actual not in chosen_indices:
+            chosen_indices.append(actual)
         if len(chosen_indices) >= 2:
             break
 
@@ -98,8 +101,8 @@ async def build_signals_feed(news_limit: int = 8) -> dict[str, Any]:
         if not snap or not isinstance(snap, dict):
             continue
         try:
-            roi_1m = float(snap.get("1month_roi") or 0)
-            change_24h = float(snap.get("24h_change_pct") or 0)
+            roi_1m = float(snap.get("roi_1m") or snap.get("1month_roi") or 0)
+            change_24h = float(snap.get("change_pct_24h") or snap.get("24h_change_pct") or 0)
         except (TypeError, ValueError):
             roi_1m = change_24h = 0.0
         if roi_1m >= 0.04:

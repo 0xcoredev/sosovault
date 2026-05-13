@@ -27,9 +27,17 @@ from typing import Any
 
 from . import sosovalue
 
-# Default index candidates. The builder will only use ones that are actually present
-# in the live `/indices` response, so this stays robust if SoSoValue renames anything.
-PREFERRED_INDICES = ("ssimag7", "ssilayer1", "ssidefi", "ssiai", "ssimeme")
+# Default index candidates (case-insensitive lookup against live /indices).
+# Real SoSoValue tickers are camelCase: ssiMAG7, ssiLayer1, ssiDeFi, ssiAI, ssiMeme,
+# ssiSocialFi, ssiRWA, ssiDePIN, ssiNFT, ssiGameFi, ssiCeFi, ssiPayFi, ssiLayer2.
+PREFERRED_INDICES = (
+    "ssiMAG7",
+    "ssiLayer1",
+    "ssiDeFi",
+    "ssiAI",
+    "ssiMeme",
+    "ssiRWA",
+)
 
 # Risk-tier base weights (stable, primary_index, secondary_index).
 RISK_BASE_WEIGHTS: dict[str, tuple[int, int, int]] = {
@@ -38,23 +46,51 @@ RISK_BASE_WEIGHTS: dict[str, tuple[int, int, int]] = {
     "high": (15, 60, 25),
 }
 
-# Display colours per symbol - keep consistent with frontend mock-data.
-SYMBOL_COLORS: dict[str, str] = {
-    "USDC": "#2775CA",
+# Display colours per symbol — case-insensitive lookups via _norm() below.
+_SYMBOL_COLORS_NORM: dict[str, str] = {
+    "usdc": "#2775CA",
     "ssimag7": "#627EEA",
     "ssilayer1": "#F7931A",
     "ssidefi": "#B6509E",
     "ssiai": "#10B981",
     "ssimeme": "#F59E0B",
+    "ssirwa": "#3B82F6",
+    "ssidepin": "#06B6D4",
+    "ssinft": "#EC4899",
+    "ssigamefi": "#22D3EE",
+    "ssicefi": "#A78BFA",
+    "ssipayfi": "#84CC16",
+    "ssilayer2": "#FB923C",
+    "ssisocialfi": "#F472B6",
 }
 
-INDEX_DISPLAY: dict[str, str] = {
+_INDEX_DISPLAY_NORM: dict[str, str] = {
     "ssimag7": "SoSoValue Mag7 Index",
     "ssilayer1": "SoSoValue Layer-1 Index",
     "ssidefi": "SoSoValue DeFi Index",
     "ssiai": "SoSoValue AI Index",
     "ssimeme": "SoSoValue Meme Index",
+    "ssirwa": "SoSoValue RWA Index",
+    "ssidepin": "SoSoValue DePIN Index",
+    "ssinft": "SoSoValue NFT Index",
+    "ssigamefi": "SoSoValue GameFi Index",
+    "ssicefi": "SoSoValue CeFi Index",
+    "ssipayfi": "SoSoValue PayFi Index",
+    "ssilayer2": "SoSoValue Layer-2 Index",
+    "ssisocialfi": "SoSoValue SocialFi Index",
 }
+
+
+def _norm(s: str) -> str:
+    return (s or "").lower()
+
+
+def _display_name(ticker: str) -> str:
+    return _INDEX_DISPLAY_NORM.get(_norm(ticker)) or f"SoSoValue {ticker} Index"
+
+
+def _color_for(ticker: str) -> str:
+    return _SYMBOL_COLORS_NORM.get(_norm(ticker), "#F7931A")
 
 
 @dataclass
@@ -81,12 +117,22 @@ def _normalise_to_100(values: list[int]) -> list[int]:
 
 
 async def _pick_indices(available: list[str]) -> list[str]:
-    """Return up to two index tickers, preferring our known set, falling back to live order."""
-    by_priority = [t for t in PREFERRED_INDICES if t in available]
-    if len(by_priority) >= 2:
-        return by_priority[:2]
+    """Return up to two index tickers from `available`, matching our preferred set
+    case-insensitively. Falls back to the first two live tickers if our preferences
+    don't appear, and to a sensible default if `available` is empty."""
+    avail_lower = {t.lower(): t for t in available}
+    by_priority: list[str] = []
+    for pref in PREFERRED_INDICES:
+        actual = avail_lower.get(pref.lower())
+        if actual and actual not in by_priority:
+            by_priority.append(actual)
+        if len(by_priority) >= 2:
+            return by_priority[:2]
     extras = [t for t in available if t not in by_priority]
-    return (by_priority + extras)[:2] or ["ssimag7", "ssilayer1"]
+    chosen = (by_priority + extras)[:2]
+    if chosen:
+        return chosen
+    return ["ssiMAG7", "ssiLayer1"]
 
 
 async def build_basket(risk_level: str) -> BasketResult:
@@ -110,8 +156,9 @@ async def build_basket(risk_level: str) -> BasketResult:
     stable_pct, primary_pct, secondary_pct = RISK_BASE_WEIGHTS[risk_level]
 
     # Momentum tilt: shift up to 10 points between the two indices based on 1m ROI gap.
-    primary_roi = float((snap_primary or {}).get("1month_roi") or 0)
-    secondary_roi = float((snap_secondary or {}).get("1month_roi") or 0)
+    # SoSoValue field names are roi_1m / roi_1y / roi_7d / change_pct_24h.
+    primary_roi = float((snap_primary or {}).get("roi_1m") or (snap_primary or {}).get("1month_roi") or 0)
+    secondary_roi = float((snap_secondary or {}).get("roi_1m") or (snap_secondary or {}).get("1month_roi") or 0)
     gap = primary_roi - secondary_roi
     tilt = max(-10, min(10, int(gap * 100)))  # 1% ROI gap = 1pt of tilt
     primary_pct += tilt
@@ -134,34 +181,44 @@ async def build_basket(risk_level: str) -> BasketResult:
     stable_pct, primary_pct, secondary_pct = weights[0], weights[1], weights[2]
 
     # Compose allocations.
+    primary_1y = float(
+        (snap_primary or {}).get("roi_1y")
+        or (snap_primary or {}).get("1year_roi")
+        or 0
+    )
+    secondary_1y = float(
+        (snap_secondary or {}).get("roi_1y")
+        or (snap_secondary or {}).get("1year_roi")
+        or 0
+    )
     allocations: list[dict[str, Any]] = [
         {
             "symbol": "USDC",
             "name": "USDC Stable Reserve",
             "percentage": stable_pct,
             "type": "Stable Reserve",
-            "color": SYMBOL_COLORS["USDC"],
+            "color": _color_for("USDC"),
         },
         {
             "symbol": primary,
-            "name": INDEX_DISPLAY.get(primary, primary.upper()),
+            "name": _display_name(primary),
             "percentage": primary_pct,
             "type": "Index",
             "oneMonthRoi": primary_roi,
-            "oneYearRoi": float((snap_primary or {}).get("1year_roi") or 0),
-            "color": SYMBOL_COLORS.get(primary, "#627EEA"),
+            "oneYearRoi": primary_1y,
+            "color": _color_for(primary),
         },
     ]
     if secondary != primary:
         allocations.append(
             {
                 "symbol": secondary,
-                "name": INDEX_DISPLAY.get(secondary, secondary.upper()),
+                "name": _display_name(secondary),
                 "percentage": secondary_pct,
                 "type": "Index",
                 "oneMonthRoi": secondary_roi,
-                "oneYearRoi": float((snap_secondary or {}).get("1year_roi") or 0),
-                "color": SYMBOL_COLORS.get(secondary, "#F7931A"),
+                "oneYearRoi": secondary_1y,
+                "color": _color_for(secondary),
             }
         )
     else:
@@ -206,8 +263,8 @@ async def build_basket(risk_level: str) -> BasketResult:
 
 
 def _tier_copy(risk_level: str, primary: str, secondary: str) -> tuple[str, list[str], list[str]]:
-    primary_disp = INDEX_DISPLAY.get(primary, primary.upper())
-    secondary_disp = INDEX_DISPLAY.get(secondary, secondary.upper())
+    primary_disp = _display_name(primary)
+    secondary_disp = _display_name(secondary)
 
     if risk_level == "low":
         summary = (
