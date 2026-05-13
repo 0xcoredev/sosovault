@@ -31,9 +31,12 @@
 
 ## Live demo
 
-- **Frontend:** _to be deployed on Vercel after submission_
-- **Backend:** _to be deployed on Render_
+- **Frontend:** https://sosovault.vercel.app
+- **Backend (live API):** https://sosovault-api.onrender.com
 - **Repo:** this repository
+
+> Free-tier Render spins the backend down after 15 min of inactivity — first
+> request after a cold start may take ~30s. Subsequent requests are instant.
 
 ---
 
