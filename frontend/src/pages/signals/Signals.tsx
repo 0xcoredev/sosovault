@@ -10,12 +10,16 @@ import {
   Loader2,
   ExternalLink,
   Radio,
+  Target,
+  XCircle,
+  Clock,
+  BarChart3,
 } from "lucide-react";
 import { TopNav } from "@/components/dashboard/TopNav";
 import { DashboardSidebar } from "@/components/dashboard/Sidebar";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import { useWallet } from "@/hooks/use-wallet";
-import { api, type SignalsFeed, type SignalItem } from "@/lib/api";
+import { api, type SignalsFeed, type SignalItem, type SignalStats } from "@/lib/api";
 import { toast } from "sonner";
 
 const KIND_LABELS: Record<string, string> = {
@@ -68,13 +72,19 @@ function relativeTime(ts: number | string): string {
 export default function Signals() {
   const wallet = useWallet();
   const [feed, setFeed] = useState<SignalsFeed | null>(null);
+  const [stats, setStats] = useState<SignalStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"live" | "tracker">("live");
 
   const fetchFeed = async () => {
     setRefreshing(true);
-    const res = await api.getSignals();
-    if (res.success && res.data) setFeed(res.data);
+    const [feedRes, statsRes] = await Promise.all([
+      api.getSignals(),
+      api.getSignalStats(),
+    ]);
+    if (feedRes.success && feedRes.data) setFeed(feedRes.data);
+    if (statsRes.success && statsRes.data) setStats(statsRes.data);
     setRefreshing(false);
     setLoading(false);
   };
@@ -124,19 +134,74 @@ export default function Signals() {
                   one-click rebalance suggestions.
                 </p>
               </div>
-              <button
-                onClick={fetchFeed}
-                disabled={refreshing}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 hover:bg-muted/70 transition disabled:opacity-50"
-              >
-                {refreshing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCcw className="h-4 w-4" />
-                )}
-                <span className="text-sm">Refresh</span>
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setActiveTab("live")}
+                  className={`px-3 py-1.5 rounded-lg text-sm transition ${
+                    activeTab === "live" ? "bg-primary text-primary-foreground" : "bg-muted/50 hover:bg-muted/70"
+                  }`}
+                >
+                  Live Feed
+                </button>
+                <button
+                  onClick={() => setActiveTab("tracker")}
+                  className={`px-3 py-1.5 rounded-lg text-sm transition ${
+                    activeTab === "tracker" ? "bg-primary text-primary-foreground" : "bg-muted/50 hover:bg-muted/70"
+                  }`}
+                >
+                  Tracker
+                </button>
+                <button
+                  onClick={fetchFeed}
+                  disabled={refreshing}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 hover:bg-muted/70 transition disabled:opacity-50"
+                >
+                  {refreshing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCcw className="h-4 w-4" />
+                  )}
+                  <span className="text-sm">Refresh</span>
+                </button>
+              </div>
             </div>
+
+            {stats && (
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <GlassCard className="p-3 text-center">
+                  <p className="text-[10px] uppercase text-muted-foreground">Total</p>
+                  <p className="text-xl font-bold">{stats.total}</p>
+                </GlassCard>
+                <GlassCard className="p-3 text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Target className="h-3 w-3 text-emerald-500" />
+                    <p className="text-[10px] uppercase text-emerald-500">Hit</p>
+                  </div>
+                  <p className="text-xl font-bold text-emerald-500">{stats.hit}</p>
+                </GlassCard>
+                <GlassCard className="p-3 text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <XCircle className="h-3 w-3 text-red-500" />
+                    <p className="text-[10px] uppercase text-red-500">Stop</p>
+                  </div>
+                  <p className="text-xl font-bold text-red-500">{stats.stop}</p>
+                </GlassCard>
+                <GlassCard className="p-3 text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Clock className="h-3 w-3 text-amber-500" />
+                    <p className="text-[10px] uppercase text-amber-500">Drift</p>
+                  </div>
+                  <p className="text-xl font-bold text-amber-500">{stats.drift}</p>
+                </GlassCard>
+                <GlassCard className="p-3 text-center">
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <BarChart3 className="h-3 w-3 text-primary" />
+                    <p className="text-[10px] uppercase text-primary">Win Rate</p>
+                  </div>
+                  <p className="text-xl font-bold text-primary">{(stats.win_rate * 100).toFixed(1)}%</p>
+                </GlassCard>
+              </div>
+            )}
 
             {loading ? (
               <div className="flex items-center justify-center py-32">
@@ -182,6 +247,17 @@ export default function Signals() {
                                   <dir.Icon className="h-3 w-3" />
                                   {signal.direction}
                                 </span>
+                                {signal.outcome && signal.outcome !== "PENDING" && (
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                                    signal.outcome === "HIT"
+                                      ? "bg-emerald-500/20 text-emerald-500 border-emerald-500/30"
+                                      : signal.outcome === "STOP"
+                                      ? "bg-red-500/20 text-red-500 border-red-500/30"
+                                      : "bg-amber-500/20 text-amber-500 border-amber-500/30"
+                                  }`}>
+                                    {signal.outcome}
+                                  </span>
+                                )}
                                 <span className="text-[10px] text-muted-foreground ml-auto">
                                   conf {(signal.confidence * 100).toFixed(0)}%
                                 </span>
@@ -190,6 +266,13 @@ export default function Signals() {
                               <p className="text-sm text-muted-foreground mb-3">
                                 {signal.detail}
                               </p>
+                              {signal.entry_price && (
+                                <div className="flex gap-4 text-[10px] text-muted-foreground font-mono mb-2">
+                                  <span>Entry: {signal.entry_price.toLocaleString()}</span>
+                                  {signal.take_profit && <span className="text-emerald-500">TP: {signal.take_profit.toLocaleString()}</span>}
+                                  {signal.stop_loss && <span className="text-red-500">SL: {signal.stop_loss.toLocaleString()}</span>}
+                                </div>
+                              )}
                               <div className="flex flex-wrap items-center gap-3">
                                 <span className="text-xs font-mono bg-muted/40 rounded px-2 py-1">
                                   {signal.suggested_action}
