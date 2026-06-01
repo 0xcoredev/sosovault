@@ -10,7 +10,7 @@ import {
   type StrategyRecommendation,
   riskProfiles,
 } from "@/lib/mock-data";
-import { api, type StrategyResponse } from "@/lib/api";
+import { api, type StrategyResponse, type RiskCheckResult } from "@/lib/api";
 import {
   TrendingUp,
   Shield,
@@ -19,6 +19,7 @@ import {
   Loader2,
   CheckCircle2,
   Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function Strategy() {
@@ -27,6 +28,7 @@ export default function Strategy() {
   const [strategy, setStrategy] = useState<StrategyRecommendation | null>(null);
   const [meta, setMeta] = useState<StrategyResponse["sosovalue"] | null>(null);
   const [llm, setLlm] = useState<StrategyResponse["llm"] | null>(null);
+  const [risk, setRisk] = useState<RiskCheckResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
 
@@ -49,10 +51,12 @@ export default function Strategy() {
         setStrategy(res.data.strategy);
         setMeta(res.data.sosovalue);
         setLlm(res.data.llm);
+        setRisk(res.data.risk ?? null);
       } else {
         setStrategy(strategyByRisk[activeRiskLevel]);
         setMeta(null);
         setLlm(null);
+        setRisk(null);
       }
       setLoading(false);
     })();
@@ -72,6 +76,7 @@ export default function Strategy() {
       setStrategy(res.data.strategy);
       setMeta(res.data.sosovalue);
       setLlm(res.data.llm);
+      setRisk(res.data.risk ?? null);
     }
     setGenerating(false);
   };
@@ -318,6 +323,38 @@ export default function Strategy() {
                         </div>
                       </div>
                     </GlassCard>
+
+                    {risk && (
+                      <GlassCard className="p-6">
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                          {risk.all_passed ? (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          ) : (
+                            <AlertTriangle className="w-4 h-4 text-amber-500" />
+                          )}
+                          Risk Gate
+                        </h3>
+                        <div className={`px-3 py-2 rounded-lg mb-3 text-sm font-medium ${
+                          risk.all_passed
+                            ? "bg-emerald-500/15 text-emerald-500"
+                            : "bg-red-500/15 text-red-500"
+                        }`}>
+                          {risk.all_passed ? "All checks passed" : "Execution blocked"}
+                        </div>
+                        <div className="space-y-2">
+                          {risk.checks.map((check, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground capitalize">
+                                {check.check.replace(/_/g, " ")}
+                              </span>
+                              <span className={check.passed ? "text-emerald-500" : "text-red-500"}>
+                                {check.passed ? "PASS" : "FAIL"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </GlassCard>
+                    )}
                   </div>
                 </div>
               </div>
