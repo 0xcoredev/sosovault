@@ -171,3 +171,125 @@ async def news(page: int = 1, page_size: int = 20) -> dict[str, Any]:
     if isinstance(data, dict):
         return data
     return {"page": page, "page_size": page_size, "total": 0, "list": []}
+
+
+# --------------------------------------------------------------------------- #
+# Currency & Pairs (9 endpoints)                                              #
+# --------------------------------------------------------------------------- #
+
+async def list_currencies() -> list[dict[str, Any]]:
+    data = await _get("/currencies")
+    return data if isinstance(data, list) else []
+
+
+async def currency_info(currency_id: str) -> Optional[dict[str, Any]]:
+    return await _get(f"/currencies/{currency_id}")
+
+
+async def currency_token_economics(currency_id: str) -> Optional[dict[str, Any]]:
+    return await _get(f"/currencies/{currency_id}/token-economics")
+
+
+async def currency_klines(currency_id: str, interval: str = "1d", limit: int = 30) -> Optional[Any]:
+    return await _get(f"/currencies/{currency_id}/klines", params={"interval": interval, "limit": limit})
+
+
+async def currency_supply(currency_id: str) -> Optional[Any]:
+    return await _get(f"/currencies/{currency_id}/supply")
+
+
+async def currency_pairs(currency_id: str) -> Optional[Any]:
+    return await _get(f"/currencies/{currency_id}/pairs")
+
+
+async def sector_spotlight() -> Optional[Any]:
+    return await _get("/currencies/sector-spotlight")
+
+
+async def currency_fundraising(currency_id: str) -> Optional[Any]:
+    return await _get(f"/currencies/{currency_id}/fundraising")
+
+
+# --------------------------------------------------------------------------- #
+# Crypto Stocks (6 endpoints)                                                 #
+# --------------------------------------------------------------------------- #
+
+async def list_crypto_stocks() -> list[dict[str, Any]]:
+    data = await _get("/crypto-stocks")
+    return data if isinstance(data, list) else []
+
+
+async def crypto_stock_snapshot(stock_ticker: str) -> Optional[dict[str, Any]]:
+    return await _get(f"/crypto-stocks/{stock_ticker}/market-snapshot")
+
+
+async def crypto_stock_market_cap(stock_ticker: str) -> Optional[Any]:
+    return await _get(f"/crypto-stocks/{stock_ticker}/market-cap")
+
+
+async def crypto_stock_klines(stock_ticker: str, interval: str = "1d", limit: int = 30) -> Optional[Any]:
+    return await _get(f"/crypto-stocks/{stock_ticker}/klines", params={"interval": interval, "limit": limit})
+
+
+async def crypto_stock_sectors() -> Optional[Any]:
+    return await _get("/crypto-stocks/sector")
+
+
+async def crypto_sector_index(sector_name: str) -> Optional[Any]:
+    return await _get(f"/crypto-stocks/sector/{sector_name}/index")
+
+
+# --------------------------------------------------------------------------- #
+# BTC Treasuries (2 endpoints)                                                #
+# --------------------------------------------------------------------------- #
+
+async def btc_treasuries() -> list[dict[str, Any]]:
+    data = await _get("/btc-treasuries")
+    return data if isinstance(data, list) else []
+
+
+async def btc_purchase_history(ticker: str) -> Optional[Any]:
+    return await _get(f"/btc-treasuries/{ticker}/purchase-history")
+
+
+# --------------------------------------------------------------------------- #
+# Fundraising (2 endpoints)                                                   #
+# --------------------------------------------------------------------------- #
+
+async def fundraising_projects(page: int = 1, page_size: int = 20) -> dict[str, Any]:
+    data = await _get("/fundraising/projects", params={"page": page, "page_size": page_size})
+    if isinstance(data, dict):
+        return data
+    return {"page": page, "page_size": page_size, "total": 0, "list": []}
+
+
+async def fundraising_project_detail(project_id: str) -> Optional[dict[str, Any]]:
+    return await _get(f"/fundraising/projects/{project_id}")
+
+
+# --------------------------------------------------------------------------- #
+# Macro (2 endpoints)                                                         #
+# --------------------------------------------------------------------------- #
+
+async def macro_events(date: str = None) -> Optional[Any]:
+    params = {}
+    if date:
+        params["date"] = date
+    return await _get("/macro/events", params=params or None)
+
+
+async def macro_event_history(event: str) -> Optional[Any]:
+    return await _get(f"/macro/events/{event}/history")
+
+
+# --------------------------------------------------------------------------- #
+# Analysis Charts (2 endpoints)                                               #
+# --------------------------------------------------------------------------- #
+
+async def analysis_charts() -> list[dict[str, Any]]:
+    data = await _get("/analyses")
+    return data if isinstance(data, list) else []
+
+
+async def analysis_chart_data(chart_name: str) -> Optional[Any]:
+    return await _get(f"/analyses/{chart_name}")
