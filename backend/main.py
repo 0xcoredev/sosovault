@@ -35,6 +35,7 @@ from services import database as db  # noqa: E402
 from services import eip712  # noqa: E402
 from services import llm as llm_svc  # noqa: E402
 from services import orchestrator  # noqa: E402
+from services import ratelimit  # noqa: E402
 from services import risk as risk_svc  # noqa: E402
 from services import scanner  # noqa: E402
 from services import signals as signals_svc  # noqa: E402
@@ -67,6 +68,12 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.add_middleware(
+    ratelimit.RateLimitMiddleware,
+    requests_per_minute=int(os.getenv("RATE_LIMIT_RPM", "60")),
+    burst=int(os.getenv("RATE_LIMIT_BURST", "10")),
 )
 
 
