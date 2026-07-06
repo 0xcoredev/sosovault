@@ -2,13 +2,14 @@
 
 > Agentic on-chain index portfolios — pick a risk tier, get a SoSoValue-curated index basket, route the rebalance through SoDEX with EIP-712 signed orders.
 
-**SoSoValue Buildathon — Wave 2 submission**
+**SoSoValue Buildathon — Wave 3 Final Submission**
 
-[![Wave](https://img.shields.io/badge/Wave-2%20%E2%80%94%20Execution-blue)]()
+[![Wave](https://img.shields.io/badge/Wave-3%20Final-blue)]()
 [![SoSoValue API](https://img.shields.io/badge/SoSoValue-35%2B%20endpoints-green)]()
 [![SoDEX](https://img.shields.io/badge/SoDEX-EIP--712%20live-green)]()
 [![AI](https://img.shields.io/badge/AI-agent%20pipeline-orange)]()
 [![DB](https://img.shields.io/badge/DB-SQLite-purple)]()
+[![Tests](https://img.shields.io/badge/Contracts-16%20tests-brightgreen)]()
 
 ---
 
@@ -23,7 +24,7 @@
 
 ---
 
-## Wave 2 highlights
+## Wave 3 highlights
 
 | Deliverable | What changed |
 |---|---|
@@ -34,8 +35,13 @@
 | **Agent pipeline** | Orchestrator coordinates: risk gate → EIP-712 execution → trade recording → snapshot |
 | **35+ SoSoValue endpoints** | All 9 API modules: Currencies, ETF, Indices, Stocks, BTC Treasuries, Fundraising, Macro, Analysis, News |
 | **Background scanner** | Auto-generates signals every 5 min, checks outcomes every 2 min |
-| **51 API routes** | Up from 8 in Wave 1 |
+| **51 API routes** | Full REST API with rate limiting and structured logging |
 | **Sector intelligence** | Composite scoring (30% 7d + 35% 1m + 35% 24h) with STRONG_BUY/BUY/NEUTRAL/SELL verdicts |
+| **Structured logging** | All services use Python logging with configurable LOG_LEVEL |
+| **Rate limiting** | Per-IP rate limiting (60 RPM, 10 burst) to protect against abuse |
+| **Error handling** | Global exception handlers with structured JSON error responses |
+| **Contract tests** | 16 comprehensive tests covering deposit, withdraw, executeBasket, and access control |
+| **No mock data** | Frontend exclusively uses real backend API — no hardcoded fallbacks |
 
 ---
 
@@ -45,6 +51,7 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                  Frontend (React + Vite + shadcn)              │
 │  Dashboard · Strategy · Signals · Activity · Wallet (SoDEX)    │
+│  Error Boundary · Loading Skeletons · Real API Only            │
 └────────────────────────────┬────────────────────────────────────┘
                              │  REST (JSON) — 51 endpoints
                              ▼
@@ -67,6 +74,11 @@
 │  │ Basket   │ │ Signals  │ │ LLM      │ │ SQLite           │  │
 │  │ Builder  │ │ Builder  │ │ Reasoning│ │ 5 tables         │  │
 │  └──────────┘ └──────────┘ └──────────┘ └──────────────────┘  │
+│                                                                 │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────────────┐   │
+│  │ Rate Limiter │ │ Structured   │ │ Error Handlers       │   │
+│  │ 60 RPM       │ │ Logging      │ │ Global + 404         │   │
+│  └──────────────┘ └──────────────┘ └──────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -88,11 +100,11 @@ sosovault/
 ├── frontend/                 React + Vite + shadcn dashboard
 │   └── src/
 │       ├── pages/            Index, Dashboard, Strategy, Signals, Activity
-│       ├── components/       GlassCard, TopNav, Sidebar, etc.
+│       ├── components/       GlassCard, TopNav, Sidebar, ErrorBoundary, Skeleton
 │       ├── hooks/use-wallet  SoDEX-testnet wallet logic
-│       └── lib/api.ts        30+ typed API methods
+│       └── lib/api.ts        30+ typed API methods (no mock fallbacks)
 ├── backend/                  FastAPI service
-│   ├── main.py               51 routes, lifespan-managed background scanner
+│   ├── main.py               51 routes, rate limiting, error handlers
 │   ├── services/
 │   │   ├── database.py       SQLite layer (5 tables)
 │   │   ├── eip712.py         EIP-712 signing + SoDEX order placement
@@ -103,12 +115,21 @@ sosovault/
 │   │   ├── signals.py        ETF/momentum/news signal builder
 │   │   ├── sosovalue.py      35+ endpoint client (9 modules)
 │   │   ├── sodex.py          SoDEX read-only client
-│   │   └── llm.py            Groq LLM reasoning
+│   │   ├── llm.py            Groq LLM reasoning
+│   │   ├── logging.py        Structured logging config
+│   │   └── ratelimit.py      Per-IP rate limiter
+│   ├── .env.example          Environment variable reference
 │   └── requirements.txt
-├── contracts/PortfolioManager.sol
-├── scripts/deploy.js
-├── test/PortfolioManager.js
-└── hardhat.config.js
+├── contracts/
+│   ├── PortfolioManager.sol  Share-accounting vault contract
+│   └── MockERC20.sol         Test ERC20 for local deployment
+├── test/
+│   └── PortfolioManager.js   16 comprehensive contract tests
+├── scripts/
+│   └── deploy.js             Deployment script with MockERC20 fallback
+├── hardhat.config.js         Hardhat config with SoDEX testnet
+├── render.yaml               Render deployment config
+└── package.json              Root package for contracts
 ```
 
 ---
@@ -175,15 +196,8 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # Required
-export SOSOVALUE_API_KEY=...
-
-# For real SoDEX execution (optional — falls back to read-only quotes)
-export SODEX_PRIVATE_KEY=0x...
-export SODEX_ADDRESS=0x...
-export SODEX_ACCOUNT_ID=...
-
-# For AI reasoning (optional — falls back to deterministic templates)
-export GROQ_API_KEY=...
+cp .env.example .env
+# Edit .env with your API keys
 
 uvicorn main:app --port 3001 --reload
 ```
@@ -207,19 +221,29 @@ npx hardhat test
 
 ---
 
-## Wave 1 → Wave 2
+## Development
 
-| Dimension | Wave 1 | Wave 2 |
+### Environment Variables
+
+| Variable | Required | Description |
 |---|---|---|
-| Execution | Paper mode | Real EIP-712 signed orders |
-| Database | None | SQLite, 5 tables |
-| SoSoValue endpoints | 5 | 35+, all 9 modules |
-| Signal tracking | Display only | HIT/STOP/DRIFT + win rate |
-| Risk management | Copy only | 4-check + circuit breaker |
-| Agent system | Single LLM call | Orchestrator pipeline |
-| Background tasks | None | 5min gen, 2min scan |
-| Portfolio data | Fixtures | SoDEX balances or DB |
-| API endpoints | 8 | 51 |
+| `SOSOVALUE_API_KEY` | Yes | SoSoValue OpenAPI key |
+| `GROQ_API_KEY` | No | Groq LLM for AI reasoning (falls back to heuristic) |
+| `SODEX_PRIVATE_KEY` | No | SoDEX private key for EIP-712 signing |
+| `SODEX_ADDRESS` | No | SoDEX wallet address |
+| `SODEX_ACCOUNT_ID` | No | SoDEX numeric account ID |
+| `LOG_LEVEL` | No | Logging level (default: INFO) |
+| `RATE_LIMIT_RPM` | No | Requests per minute limit (default: 60) |
+
+### Running Tests
+
+```bash
+# Smart contracts
+npx hardhat test
+
+# Frontend
+cd frontend && npm test
+```
 
 ---
 
