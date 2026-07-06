@@ -24,8 +24,9 @@ from enum import Enum
 from typing import Any, List, Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 load_dotenv()
@@ -58,9 +59,29 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="SoSoVault API",
     description="Agentic on-chain index portfolios powered by SoSoValue + SoDEX.",
-    version="0.2.0",
+    version="1.0.0",
     lifespan=lifespan,
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "Internal server error",
+            "detail": str(exc) if os.getenv("DEBUG") else "An unexpected error occurred",
+        },
+    )
+
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc):
+    return JSONResponse(
+        status_code=404,
+        content={"error": "Not found", "path": request.url.path},
+    )
+
 
 app.add_middleware(
     CORSMiddleware,
