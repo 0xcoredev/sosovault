@@ -1,7 +1,7 @@
 {
   "name": "sosovault-contracts",
-  "version": "0.1.0",
-  "description": "SoSoVault smart contracts (Wave 1: documented + tested, not deployed)",
+  "version": "1.0.0",
+  "description": "SoSoVault smart contracts — agentic on-chain index portfolios",
   "main": "index.js",
   "scripts": {
     "compile": "hardhat compile",
