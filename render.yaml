@@ -12,8 +12,20 @@ services:
       - key: PYTHON_VERSION
         value: "3.11.9"
       - key: SOSOVALUE_API_KEY
-        sync: false  # set in Render dashboard
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: SODEX_PRIVATE_KEY
+        sync: false
+      - key: SODEX_ADDRESS
+        sync: false
+      - key: SODEX_ACCOUNT_ID
+        sync: false
       - key: SODEX_BASE_URL
         value: https://testnet-gw.sodex.dev
       - key: CORS_ALLOW_ORIGINS
         value: "*"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: RATE_LIMIT_RPM
+        value: "60"

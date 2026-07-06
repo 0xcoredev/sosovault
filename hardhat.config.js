@@ -24,4 +24,7 @@ module.exports = {
       accounts: DEPLOYER_PRIVATE_KEY ? [DEPLOYER_PRIVATE_KEY] : [],
     },
   },
+  etherscan: {
+    apiKey: process.env.SODEX_API_KEY || "",
+  },
 };
