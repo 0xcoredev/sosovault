@@ -8,6 +8,7 @@ import { AIStrategyCard } from "@/components/dashboard/AIStrategyCard";
 import { ExecutionPanel } from "@/components/dashboard/ExecutionPanel";
 import { ActivityLog } from "@/components/dashboard/ActivityLog";
 import { EmptyState } from "@/components/dashboard/EmptyState";
+import { PortfolioSkeleton } from "@/components/Skeleton";
 import { PerformanceChart } from "./PerformanceChart";
 import {
   RiskLevel,
@@ -105,6 +106,8 @@ export default function Dashboard() {
           <main className="flex-1 p-3 lg:p-5 max-w-[1400px] mx-auto w-full">
             {!wallet.connected ? (
               <EmptyState type="no-wallet" onAction={wallet.connect} />
+            ) : loading ? (
+              <PortfolioSkeleton />
             ) : (
               <div className="space-y-6">
                 <PerformanceChart data={chartData} loading={loading} />
