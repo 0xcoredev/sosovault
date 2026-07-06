@@ -15,6 +15,10 @@ import os
 import time
 from typing import Any, Optional
 
+from .logging import get_logger
+
+log = get_logger("llm")
+
 DEFAULT_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
@@ -26,7 +30,7 @@ def _client():
     try:
         from groq import Groq  # type: ignore
     except Exception as exc:  # pragma: no cover - defensive
-        print(f"[llm] groq import failed: {exc}")
+        log.warning("Groq import failed: %s", exc)
         return None
     return Groq(api_key=GROQ_API_KEY)
 
@@ -85,7 +89,7 @@ def generate_reasoning(
             response_format={"type": "json_object"},
         )
     except Exception as exc:  # pragma: no cover - defensive
-        print(f"[llm] groq call failed: {exc}")
+        log.warning("Groq call failed: %s", exc)
         meta["latency_ms"] = int((time.time() - started) * 1000)
         meta["error"] = str(exc)
         return None, meta
@@ -96,7 +100,7 @@ def generate_reasoning(
         content = completion.choices[0].message.content or "{}"
         parsed = json.loads(content)
     except Exception as exc:  # pragma: no cover - defensive
-        print(f"[llm] failed to parse groq output: {exc}")
+        log.warning("Failed to parse Groq output: %s", exc)
         meta["error"] = f"parse: {exc}"
         return None, meta
 

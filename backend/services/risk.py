@@ -18,6 +18,9 @@ from datetime import datetime, timezone
 from typing import Any
 
 from . import database as db
+from .logging import get_logger
+
+log = get_logger("risk")
 
 # Risk parameters
 MAX_DAILY_TRADES = 10
@@ -126,8 +129,8 @@ def record_trade_failure() -> None:
     _consecutive_fails += 1
     if _consecutive_fails >= CIRCUIT_BREAKER_CONSECUTIVE_FAILS:
         _circuit_open_until = _now() + CIRCUIT_BREAKER_COOLDOWN_S
-        print(f"[risk] Circuit breaker tripped after {_consecutive_fails} consecutive failures. "
-              f"Cooldown: {CIRCUIT_BREAKER_COOLDOWN_S}s")
+        log.warning("Circuit breaker tripped after %d consecutive failures. Cooldown: %ds",
+                     _consecutive_fails, CIRCUIT_BREAKER_COOLDOWN_S)
         db.log_agent_action(
             agent="risk_manager",
             action="circuit_breaker_tripped",

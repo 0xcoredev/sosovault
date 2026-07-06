@@ -31,6 +31,10 @@ from typing import Any, Optional
 
 import httpx
 
+from .logging import get_logger
+
+log = get_logger("sodex")
+
 # Default to testnet for the buildathon. Override with SODEX_BASE_URL for mainnet.
 BASE_URL = os.getenv("SODEX_BASE_URL", "https://testnet-gw.sodex.dev")
 TIMEOUT_S = float(os.getenv("SODEX_TIMEOUT_S", "5"))
@@ -72,10 +76,10 @@ async def book_ticker(symbol: str) -> Optional[dict[str, Any]]:
             resp.raise_for_status()
             payload = resp.json()
     except httpx.HTTPError as exc:
-        print(f"[sodex] {symbol} bookTicker error: {exc}")
+        log.warning("%s bookTicker error: %s", symbol, exc)
         return None
     except Exception as exc:  # pragma: no cover - defensive
-        print(f"[sodex] {symbol} unexpected error: {exc}")
+        log.error("%s unexpected error: %s", symbol, exc)
         return None
 
     if not isinstance(payload, dict):

@@ -26,6 +26,10 @@ from typing import Any, Optional
 
 import httpx
 
+from .logging import get_logger
+
+log = get_logger("sosovalue")
+
 BASE_URL = os.getenv("SOSOVALUE_BASE_URL", "https://openapi.sosovalue.com/openapi/v1")
 API_KEY = os.getenv("SOSOVALUE_API_KEY", "")
 CACHE_TTL_S = int(os.getenv("SOSOVALUE_CACHE_TTL_S", "60"))
@@ -82,19 +86,19 @@ async def _get(path: str, params: Optional[dict[str, Any]] = None) -> Optional[A
             resp.raise_for_status()
             envelope = resp.json()
     except httpx.HTTPStatusError as exc:
-        print(f"[sosovalue] HTTP {exc.response.status_code} on {path}: {exc.response.text[:200]}")
+        log.warning("HTTP %s on %s: %s", exc.response.status_code, path, exc.response.text[:200])
         return None
     except httpx.HTTPError as exc:
-        print(f"[sosovalue] network error on {path}: {exc}")
+        log.warning("Network error on %s: %s", path, exc)
         return None
     except Exception as exc:  # pragma: no cover - defensive
-        print(f"[sosovalue] unexpected error on {path}: {exc}")
+        log.error("Unexpected error on %s: %s", path, exc)
         return None
 
     # Unwrap {code, message, data}.
     if isinstance(envelope, dict) and "data" in envelope:
         if envelope.get("code") not in (0, "0", None):
-            print(f"[sosovalue] non-zero code on {path}: {envelope.get('code')} {envelope.get('message')}")
+            log.warning("Non-zero code on %s: %s %s", path, envelope.get('code'), envelope.get('message'))
             return None
         data = envelope.get("data")
     else:

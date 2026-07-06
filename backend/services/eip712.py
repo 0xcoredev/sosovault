@@ -27,8 +27,6 @@ from typing import Any, Optional
 
 import httpx
 from eth_account import Account
-from eth_abi import encode as abi_encode
-from hashlib import sha3_256 as keccak256_bytes
 
 # ---------------------------------------------------------------------------
 # Config

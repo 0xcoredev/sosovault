@@ -19,6 +19,9 @@ from typing import Any
 from . import database as db
 from . import signals as signals_svc
 from . import sosovalue
+from .logging import get_logger
+
+log = get_logger("scanner")
 
 
 async def evaluate_signal_outcome(signal: dict[str, Any]) -> str:
@@ -207,7 +210,7 @@ async def _scanner_loop(interval_s: int = 300) -> None:
                 await generate_and_store_signals()
                 last_generate = now
             except Exception as exc:
-                print(f"[scanner] generate error: {exc}")
+                log.error("Generate error: %s", exc)
                 db.log_agent_action(
                     agent="signal_scanner",
                     action="generate_error",
@@ -221,7 +224,7 @@ async def _scanner_loop(interval_s: int = 300) -> None:
                 await scan_pending_signals()
                 last_scan = now
             except Exception as exc:
-                print(f"[scanner] scan error: {exc}")
+                log.error("Scan error: %s", exc)
 
         await asyncio.sleep(30)
 
@@ -233,9 +236,9 @@ def start_background_scanner(interval_s: int = 300) -> None:
     try:
         loop = asyncio.get_running_loop()
         _scanner_task = loop.create_task(_scanner_loop(interval_s))
-        print(f"[scanner] Background signal scanner started (interval={interval_s}s)")
+        log.info("Background signal scanner started (interval=%ds)", interval_s)
     except RuntimeError:
-        print("[scanner] No event loop running — scanner will start on first request")
+        log.warning("No event loop running — scanner will start on first request")
 
 
 def stop_background_scanner() -> None:
