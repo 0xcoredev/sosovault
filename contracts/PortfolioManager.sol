@@ -9,12 +9,9 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  * @title PortfolioManager
  * @notice Minimal SoSoVault share-accounting contract.
  *
- * Wave 1: ABI is documented and unit-tested but the contract is intentionally
- *         not deployed. The frontend "Submit Basket" path runs in paper mode.
- *
- * Wave 2: Deploy to SoDEX testnet (chainId 138565). The agent backend signs
- *         EIP-712 newOrder messages for each basket leg via the SoDEX REST API
- *         and emits BasketRebalanced here for the on-chain audit trail.
+ * Deployed to SoDEX testnet (chainId 138565). The agent backend signs
+ * EIP-712 newOrder messages for each basket leg via the SoDEX REST API
+ * and emits BasketRebalanced here for the on-chain audit trail.
  *
  * The contract intentionally does NOT route trades on-chain. SoSoVault baskets
  * route through the SoDEX off-chain orderbook (gas-efficient, Hyperliquid-style

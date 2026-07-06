@@ -3,9 +3,8 @@ SoDEX read-only client (testnet by default).
 
 Docs: https://sodex.com/documentation/api/api
 
-Wave 1 only uses public, unauthenticated endpoints to fetch live orderbook prices.
-Order placement requires EIP-712 signing with the user's private key and is scoped
-for Wave 2.
+Uses public, unauthenticated endpoints to fetch live orderbook prices.
+Order placement with EIP-712 signing is handled by services.eip712.
 
 Endpoint we use:
 

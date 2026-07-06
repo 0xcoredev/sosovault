@@ -34,7 +34,7 @@ export default function Index() {
         >
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs font-medium text-primary mb-4">
             <Sparkles className="h-3 w-3" />
-            SoSoValue Buildathon · Wave 1 Submission
+            SoSoValue Buildathon · Wave 3 Final
           </div>
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-4">
             Agentic on-chain <span className="gradient-text">index portfolios</span>
@@ -99,12 +99,12 @@ export default function Index() {
             <li>The backend pulls live SoSoValue indices, ETF flows, and news.</li>
             <li>The basket builder converts that into target weights with a momentum tilt.</li>
             <li>An AI layer generates the human-readable reasoning grounded in those live numbers.</li>
-            <li>SoDEX bookticker quotes the route; the basket is submitted (paper mode in Wave 1).</li>
+            <li>SoDEX bookticker quotes the route; the basket is submitted via EIP-712 signed orders.</li>
             <li>The Signals page surfaces rebalance suggestions as new flows + news arrive.</li>
           </ol>
           <p className="mt-4 text-xs text-muted-foreground">
-            Wave 1 ships the read-to-submit flow with a paper-execution stub. Wave 2 wires
-            EIP-712 SoDEX order signing + on-chain `BasketRebalanced` events.
+            SoSoVault ships EIP-712 SoDEX order signing, SQLite persistence, a 4-check risk
+            gatekeeper, and an agentic pipeline — all wired end-to-end.
           </p>
         </GlassCard>
       </main>

@@ -5,8 +5,8 @@ Turns raw SoSoValue data (ETF flows, index ROI, news sentiment heuristics) into 
 of `SignalItem` objects that the frontend Signals page renders. Each signal has a
 `suggested_action` string the user can act on with one click ("Apply to my basket").
 
-This is intentionally rule-based for Wave 1 — clear, explainable, fast. Wave 2 will
-swap the heuristic news classifier for a Groq-powered sentiment pass.
+This is intentionally rule-based — clear, explainable, fast. The heuristic news
+classifier can be swapped for a Groq-powered sentiment pass when available.
 """
 from __future__ import annotations
 

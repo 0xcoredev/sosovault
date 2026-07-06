@@ -1,7 +1,7 @@
 """
 SoSoVault backend — agentic on-chain index portfolio API.
 
-Wave 2 scope:
+Features:
   - Live SoSoValue OpenAPI integration (all 9 modules, 35+ endpoints)
   - EIP-712 SoDEX order execution (non-custodial, signed on backend)
   - SQLite persistence for signals, trades, agent logs, portfolio snapshots
@@ -10,6 +10,7 @@ Wave 2 scope:
   - Background signal scanner (5-min generate, 2-min outcome scan)
   - Risk management: 4-check gatekeeper + circuit breaker
   - Groq LLM reasoning for basket explanations
+  - Per-IP rate limiting and structured logging
 """
 from __future__ import annotations
 

@@ -1,11 +1,10 @@
 /**
  * SoSoVault — PortfolioManager deploy script.
  *
- * Wave 1: NOT executed in production. The contract compiles and the unit tests
- * pass; deployment is deferred to Wave 2 once the SoDEX testnet deposit/faucet
- * loop is verified.
+ * Deploys the PortfolioManager contract to the specified network.
+ * On local runs without USDC_ADDRESS, deploys a MockERC20 placeholder.
  *
- * To deploy locally for tests:
+ * Usage:
  *   npx hardhat node                   (terminal A)
  *   npx hardhat run scripts/deploy.js --network localhost   (terminal B)
  */
