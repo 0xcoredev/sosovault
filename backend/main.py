@@ -35,6 +35,7 @@ load_dotenv()
 from services import basket as basket_svc  # noqa: E402
 from services import database as db  # noqa: E402
 from services import eip712  # noqa: E402
+from services import health as health_svc  # noqa: E402
 from services import llm as llm_svc  # noqa: E402
 from services import orchestrator  # noqa: E402
 from services import ratelimit  # noqa: E402
@@ -172,8 +173,8 @@ async def root() -> dict[str, Any]:
 
 
 @app.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok", "time": _now_iso()}
+async def health() -> dict[str, Any]:
+    return health_svc.full_health_check()
 
 
 # --------------------------------------------------------------------------- #
