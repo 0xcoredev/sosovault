@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import type { PortfolioSnapshot } from "@/lib/mock-data";
-import { portfolioData, performanceData } from "@/lib/mock-data";
 import { GlassCard } from "./GlassCard";
 import { SkeletonBlock } from "./SkeletonBlock";
 
@@ -13,9 +12,7 @@ interface PortfolioCardProps {
 }
 
 export function PortfolioCard({ loading, portfolio, performance }: PortfolioCardProps) {
-  const data = portfolio ?? portfolioData;
-  const perf = performance && performance.length > 0 ? performance : performanceData;
-  const isPositive = data.change24h >= 0;
+  const perf = performance && performance.length > 0 ? performance : [];
 
   if (loading) {
     return (
@@ -32,6 +29,22 @@ export function PortfolioCard({ loading, portfolio, performance }: PortfolioCard
       </GlassCard>
     );
   }
+
+  if (!portfolio) {
+    return (
+      <GlassCard className="col-span-full lg:col-span-2">
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground">
+            No portfolio data. Connect your wallet to view holdings.
+          </p>
+        </div>
+      </GlassCard>
+    );
+  }
+
+  const data = portfolio;
+  const isPositive = data.change24h >= 0;
 
   return (
     <GlassCard className="col-span-full lg:col-span-2">
@@ -63,43 +76,49 @@ export function PortfolioCard({ loading, portfolio, performance }: PortfolioCard
       </div>
 
       <div className="mb-3 h-28 -mx-2">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={perf} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
-            <defs>
-              <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(38, 96%, 56%)" stopOpacity={0.4} />
-                <stop offset="100%" stopColor="hsl(38, 96%, 56%)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <XAxis
-              dataKey="date"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 10, fill: "hsl(220, 15%, 55%)" }}
-              interval="preserveStartEnd"
-            />
-            <Tooltip
-              contentStyle={{
-                background: "hsl(230, 25%, 11%)",
-                border: "1px solid hsl(230, 20%, 22%)",
-                borderRadius: "8px",
-                color: "hsl(220, 20%, 92%)",
-                fontSize: "11px",
-                padding: "6px 10px",
-              }}
-              formatter={(value: number) => [`$${value.toLocaleString()}`, "Value"]}
-            />
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke="hsl(38, 96%, 56%)"
-              strokeWidth={2}
-              fill="url(#chartGradient)"
-              dot={false}
-              activeDot={{ r: 4, fill: "hsl(38, 96%, 56%)", stroke: "hsl(230, 25%, 11%)", strokeWidth: 2 }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {perf.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={perf} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+              <defs>
+                <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(38, 96%, 56%)" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="hsl(38, 96%, 56%)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="date"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 10, fill: "hsl(220, 15%, 55%)" }}
+                interval="preserveStartEnd"
+              />
+              <Tooltip
+                contentStyle={{
+                  background: "hsl(230, 25%, 11%)",
+                  border: "1px solid hsl(230, 20%, 22%)",
+                  borderRadius: "8px",
+                  color: "hsl(220, 20%, 92%)",
+                  fontSize: "11px",
+                  padding: "6px 10px",
+                }}
+                formatter={(value: number) => [`$${value.toLocaleString()}`, "Value"]}
+              />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="hsl(38, 96%, 56%)"
+                strokeWidth={2}
+                fill="url(#chartGradient)"
+                dot={false}
+                activeDot={{ r: 4, fill: "hsl(38, 96%, 56%)", stroke: "hsl(230, 25%, 11%)", strokeWidth: 2 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
+            No performance data yet
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-2">

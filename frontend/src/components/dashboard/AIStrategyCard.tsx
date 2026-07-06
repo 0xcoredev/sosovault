@@ -1,8 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, ChevronDown, Sparkles } from "lucide-react";
+import { Brain, ChevronDown, Sparkles, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import type { StrategyRecommendation } from "@/lib/mock-data";
-import { aiStrategy } from "@/lib/mock-data";
 import { GlassCard } from "./GlassCard";
 import { SkeletonBlock } from "./SkeletonBlock";
 
@@ -15,7 +14,6 @@ interface AIStrategyCardProps {
 
 export function AIStrategyCard({ loading, strategy, llmActive }: AIStrategyCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const data = strategy ?? aiStrategy;
 
   if (loading) {
     return (
@@ -25,6 +23,19 @@ export function AIStrategyCard({ loading, strategy, llmActive }: AIStrategyCardP
           {[1, 2, 3].map((i) => (
             <SkeletonBlock key={i} className="h-10 w-full" />
           ))}
+        </div>
+      </GlassCard>
+    );
+  }
+
+  if (!strategy) {
+    return (
+      <GlassCard className="col-span-full lg:col-span-2">
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground">
+            No strategy data. Connect wallet and select a risk profile.
+          </p>
         </div>
       </GlassCard>
     );
@@ -48,7 +59,7 @@ export function AIStrategyCard({ loading, strategy, llmActive }: AIStrategyCardP
       </div>
 
       <div className="space-y-2">
-        {data.allocations.map((alloc, i) => (
+        {strategy.allocations.map((alloc, i) => (
           <motion.div
             key={alloc.symbol + i}
             initial={{ opacity: 0, x: -10 }}
@@ -114,7 +125,7 @@ export function AIStrategyCard({ loading, strategy, llmActive }: AIStrategyCardP
             className="overflow-hidden"
           >
             <div className="mt-2 space-y-2 rounded-lg bg-muted/10 p-3">
-              {Object.entries(data.reasoning).map(([key, value]) => (
+              {Object.entries(strategy.reasoning).map(([key, value]) => (
                 <div key={key}>
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-primary mb-0.5">
                     {key}

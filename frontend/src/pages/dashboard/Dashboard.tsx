@@ -12,8 +12,6 @@ import { PortfolioSkeleton } from "@/components/Skeleton";
 import { PerformanceChart } from "./PerformanceChart";
 import {
   RiskLevel,
-  portfolioData,
-  performanceData,
   type StrategyRecommendation,
   type PortfolioSnapshot,
 } from "@/lib/mock-data";
@@ -46,8 +44,8 @@ export default function Dashboard() {
         api.getPerformance(wallet.address!),
         api.getActivity(wallet.address!),
       ]);
-      setPortfolio(pRes.success && pRes.data ? pRes.data : portfolioData);
-      setPerformance(perfRes.success && perfRes.data ? perfRes.data : performanceData);
+      setPortfolio(pRes.success && pRes.data ? pRes.data : null);
+      setPerformance(perfRes.success && perfRes.data ? perfRes.data : []);
       setActivity(actRes.success && actRes.data ? actRes.data : null);
       setLoading(false);
     })();
@@ -77,7 +75,7 @@ export default function Dashboard() {
   }, [wallet.connected, wallet.address, riskLevel]);
 
   const chartData = useMemo(
-    () => (performance.length > 0 ? performance : performanceData),
+    () => (performance.length > 0 ? performance : []),
     [performance],
   );
 

@@ -4,7 +4,6 @@ import { TopNav } from "@/components/dashboard/TopNav";
 import { DashboardSidebar } from "@/components/dashboard/Sidebar";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { GlassCard } from "@/components/dashboard/GlassCard";
-import { activityLog } from "@/lib/mock-data";
 import { api, type ActivityItem } from "@/lib/api";
 import {
   ArrowUpRight,
@@ -60,7 +59,7 @@ export default function Activity() {
       if (res.success && res.data) {
         setActivities(res.data);
       } else {
-        setActivities(activityLog as unknown as ActivityItem[]);
+        setActivities([]);
       }
       setLoading(false);
     })();

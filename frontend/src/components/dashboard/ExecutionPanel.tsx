@@ -1,9 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Rocket, Fuel, TrendingUp, X, Loader2, AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { Rocket, Fuel, TrendingUp, X, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { StrategyRecommendation } from "@/lib/mock-data";
-import { aiStrategy } from "@/lib/mock-data";
 import { GlassCard } from "./GlassCard";
 import { toast } from "sonner";
 import { SkeletonBlock } from "./SkeletonBlock";
@@ -22,11 +21,15 @@ export function ExecutionPanel({ loading, walletConnected, strategy }: Execution
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const wallet = useWallet();
-  const data = strategy ?? aiStrategy;
 
   const handleExecute = async () => {
     if (!wallet.connected || !wallet.address) {
       toast.error("Please connect your wallet first");
+      return;
+    }
+
+    if (!strategy) {
+      toast.error("No strategy to execute. Generate a basket first.");
       return;
     }
 
@@ -35,8 +38,8 @@ export function ExecutionPanel({ loading, walletConnected, strategy }: Execution
     setTxHash(null);
 
     try {
-      const allocations = data.allocations.map((a) => a.percentage);
-      const symbols = data.allocations.map((a) => a.symbol);
+      const allocations = strategy.allocations.map((a) => a.percentage);
+      const symbols = strategy.allocations.map((a) => a.symbol);
 
       const response = await api.executeStrategy(wallet.address, allocations, symbols);
 
@@ -72,6 +75,19 @@ export function ExecutionPanel({ loading, walletConnected, strategy }: Execution
     );
   }
 
+  if (!strategy) {
+    return (
+      <GlassCard>
+        <div className="flex flex-col items-center justify-center py-6 text-center">
+          <AlertCircle className="h-6 w-6 text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground">
+            Generate a strategy first to execute a basket.
+          </p>
+        </div>
+      </GlassCard>
+    );
+  }
+
   return (
     <>
       <GlassCard delay={0.15}>
@@ -79,8 +95,8 @@ export function ExecutionPanel({ loading, walletConnected, strategy }: Execution
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Execute Basket
           </h3>
-          <span className="text-[9px] uppercase text-warning bg-warning/10 px-1.5 py-0.5 rounded font-mono">
-            Wave 1: paper
+          <span className="text-[9px] uppercase text-success bg-success/10 px-1.5 py-0.5 rounded font-mono">
+            EIP-712 live
           </span>
         </div>
 
@@ -89,7 +105,7 @@ export function ExecutionPanel({ loading, walletConnected, strategy }: Execution
             <Fuel className="h-3 w-3" />
             Est. Gas
           </div>
-          <span className="font-mono text-[11px]">{data.estimatedGas} ETH</span>
+          <span className="font-mono text-[11px]">{strategy.estimatedGas} ETH</span>
         </div>
 
         <div className="mb-3 flex items-center justify-between rounded-lg bg-muted/20 px-3 py-2">
@@ -98,7 +114,7 @@ export function ExecutionPanel({ loading, walletConnected, strategy }: Execution
             Est. Annual Yield
           </div>
           <span className="font-mono text-[11px] text-success">
-            {(data.estimatedYield * 100).toFixed(1)}%
+            {(strategy.estimatedYield * 100).toFixed(1)}%
           </span>
         </div>
 
@@ -115,11 +131,6 @@ export function ExecutionPanel({ loading, walletConnected, strategy }: Execution
             Submit Basket
           </Button>
         </motion.div>
-
-        <p className="mt-2 text-[10px] text-muted-foreground leading-snug flex gap-1">
-          <Info className="h-3 w-3 mt-0.5 shrink-0" />
-          Wave 2 will sign EIP-712 SoDEX orders + emit BasketRebalanced on-chain.
-        </p>
       </GlassCard>
 
       <AnimatePresence>
@@ -150,7 +161,7 @@ export function ExecutionPanel({ loading, walletConnected, strategy }: Execution
               </div>
 
               <div className="mb-3 space-y-1.5">
-                {data.allocations.map((a) => (
+                {strategy.allocations.map((a) => (
                   <div
                     key={a.symbol}
                     className="flex justify-between rounded-md bg-muted/20 px-3 py-1.5 text-sm"
@@ -162,8 +173,8 @@ export function ExecutionPanel({ loading, walletConnected, strategy }: Execution
               </div>
 
               <div className="mb-3 flex justify-between text-[11px] text-muted-foreground px-1">
-                <span>Gas: ~{data.estimatedGas} ETH</span>
-                <span>Yield: ~{(data.estimatedYield * 100).toFixed(1)}%</span>
+                <span>Gas: ~{strategy.estimatedGas} ETH</span>
+                <span>Yield: ~{(strategy.estimatedYield * 100).toFixed(1)}%</span>
               </div>
 
               {(executing || txHash || error) && (
@@ -178,7 +189,7 @@ export function ExecutionPanel({ loading, walletConnected, strategy }: Execution
                     <div className="flex flex-col items-center gap-1 text-emerald-500">
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="h-4 w-4" />
-                        <span>Submitted (paper mode)</span>
+                        <span>Basket submitted via EIP-712</span>
                       </div>
                       <span className="text-[10px] text-muted-foreground font-mono">
                         {txHash.slice(0, 14)}...{txHash.slice(-10)}

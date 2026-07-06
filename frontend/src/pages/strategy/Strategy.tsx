@@ -6,7 +6,6 @@ import { EmptyState } from "@/components/dashboard/EmptyState";
 import { GlassCard } from "@/components/dashboard/GlassCard";
 import {
   RiskLevel,
-  strategyByRisk,
   type StrategyRecommendation,
   riskProfiles,
 } from "@/lib/mock-data";
@@ -53,7 +52,7 @@ export default function Strategy() {
         setLlm(res.data.llm);
         setRisk(res.data.risk ?? null);
       } else {
-        setStrategy(strategyByRisk[activeRiskLevel]);
+        setStrategy(null);
         setMeta(null);
         setLlm(null);
         setRisk(null);
