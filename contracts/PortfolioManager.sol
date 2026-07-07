@@ -38,8 +38,8 @@ contract PortfolioManager is Ownable, ReentrancyGuard {
         uint256 timestamp
     );
 
-    modifier onlyAgentOrUser(address _user) {
-        require(msg.sender == _user || msg.sender == agent, "PM: not authorized");
+    modifier onlyAgentOrOwner() {
+        require(msg.sender == owner() || msg.sender == agent, "PM: not authorized");
         _;
     }
 
@@ -56,7 +56,6 @@ contract PortfolioManager is Ownable, ReentrancyGuard {
     /// @notice Deposit USDC and receive SoSoVault shares at current NAV.
     function deposit(uint256 _amount) external nonReentrant {
         require(_amount > 0, "PM: amount=0");
-        require(usdc.transferFrom(msg.sender, address(this), _amount), "PM: transfer failed");
 
         uint256 sharesMinted;
         uint256 totalValue = getTotalValue();
@@ -65,6 +64,8 @@ contract PortfolioManager is Ownable, ReentrancyGuard {
         } else {
             sharesMinted = (_amount * totalShares) / totalValue;
         }
+
+        require(usdc.transferFrom(msg.sender, address(this), _amount), "PM: transfer failed");
 
         deposits[msg.sender] += _amount;
         shares[msg.sender] += sharesMinted;
@@ -105,7 +106,7 @@ contract PortfolioManager is Ownable, ReentrancyGuard {
     function executeBasket(
         uint256[] calldata _weights,
         string[] calldata _symbols
-    ) external onlyAgentOrUser(msg.sender) nonReentrant {
+    ) external onlyAgentOrOwner nonReentrant {
         require(_weights.length == _symbols.length, "PM: length mismatch");
         require(_weights.length > 0, "PM: empty basket");
 

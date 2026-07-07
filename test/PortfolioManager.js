@@ -38,9 +38,9 @@ describe("PortfolioManager (SoSoVault)", function () {
     });
 
     it("non-owner cannot set agent", async function () {
-      await expect(pm.connect(user).setAgent(agent.address)).to.be.revertedWith(
-        "Ownable: caller is not the owner"
-      );
+      await expect(pm.connect(user).setAgent(agent.address))
+        .to.be.revertedWithCustomError(pm, "OwnableUnauthorizedAccount")
+        .withArgs(user.address);
     });
 
     it("emits AgentUpdated event", async function () {
@@ -168,7 +168,7 @@ describe("PortfolioManager (SoSoVault)", function () {
       await usdc.mint(await pm.getAddress(), ethers.parseUnits("50000", 6));
 
       const userValue = await pm.getUserValue(user.address);
-      expect(userValue).to.equal(ethers.parseUnits("10000", 6));
+      expect(userValue).to.equal(ethers.parseUnits("60000", 6));
     });
 
     it("getUserValue returns 0 for non-depositor", async function () {
